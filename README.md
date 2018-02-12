@@ -3,3 +3,4 @@ This is the home of a HTML plaything I am working on. This file is at https://th
 
 ## Index
 1. [001-FullscreenCanvas](https://theblindbandet.github.io/canvas-ball/001-FullScreenCanvas)
+2. [002-Circles](https://theblindbandet.github.io/canvas-ball/002-Circles)
