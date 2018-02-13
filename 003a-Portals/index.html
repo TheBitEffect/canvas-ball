@@ -1,0 +1,102 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>003a-Portals</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    /* No Margins */
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Fill everything! */
+
+    canvas {
+      display: block;
+    }
+
+    /* No scrollbars */
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    function ball(canvas, x, y, GRAVITY_X, GRAVITY_Y, radius, color) {
+      this.canvas = canvas;
+      this.context = this.canvas.getContext('2d');
+      this.x = x;
+      this.y = y;
+      this.vx = 0;
+      this.vy = 0;
+      this.ax = 0;
+      this.ay = 0;
+      this.GRAVITY_X = GRAVITY_X;
+      this.GRAVITY_Y = GRAVITY_Y;
+      this.radius = radius;
+      this.color = color;
+
+      this.isHeld = false;
+
+      this.requestUpdateLocation = function (elapsed) {
+        let gx = this.GRAVITY_X * elapsed;
+        let gy = this.GRAVITY_Y * elapsed;
+
+        this.vx += this.ax * elapsed + gx;
+        this.vy += this.ay * elapsed + gy;
+        this.x += this.vx * elapsed;
+        this.y += this.vy * elapsed;
+
+        this.onBottom();
+      }
+
+      this.render = function () {
+        this.context.beginPath(); 
+        this.context.fillStyle = this.color;
+        this.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        this.context.fill();
+      }
+      this.onBottom = function () {
+        var bottom = this.canvas.height + this.radius;
+        if (this.y > bottom) {
+          this.y = - this.radius;
+        }
+      }
+    }
+
+    var canvas = document.getElementById('canvas');
+    function onResize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', onResize, false);
+    onResize();
+
+    var canvasBall = new ball(canvas, canvas.width / 2, canvas.height / 2, 0, 0.001, 50, '#000000');
+    var lastRun = performance.now();
+
+    function render(time) {
+      canvasBall.context.clearRect(0, 0, canvasBall.canvas.width, canvasBall.canvas.height);
+      canvasBall.requestUpdateLocation(time - lastRun);
+      canvasBall.render();
+
+      lastRun = performance.now();
+      requestAnimationFrame(render);
+    };
+    window.onload = function () {
+      requestAnimationFrame(render);
+    }
+  </script>
+</body>
+
+</html>
