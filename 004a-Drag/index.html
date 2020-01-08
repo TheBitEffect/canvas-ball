@@ -1,0 +1,249 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>004-Bounce</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    /* No Margins */
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Fill everything! */
+
+    canvas {
+      display: block;
+    }
+
+    /* No scrollbars */
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    function ball(canvas, x, y, elasticity, friction, GRAVITY_X, GRAVITY_Y, radius, color) {
+        this.canvas = canvas;
+        this.context = this.canvas.getContext('2d');
+        this.x = x;
+        this.y = y;
+        this.vx = 0;
+        this.vy = 0;
+        this.ax = 0;
+        this.ay = 0;
+        this.lastHeld = {
+          x: 0,
+          y: 0
+        };
+        this.lastHeldVelocity = {
+          x: 0,
+          y: 0
+        }
+        this.elasticity = elasticity;
+        this.friction = friction;
+        this.GRAVITY_X = GRAVITY_X;
+        this.GRAVITY_Y = GRAVITY_Y;
+        this.radius = radius;
+        this.color = color;
+        this.isHeld = false;
+        this.isSleeping = false;
+        this.requestUpdateLocation = function (elapsed) {
+          if (!this.isSleeping) {
+            var gx = 0;
+            var gy = 0;
+            if (!this.isHeld) {
+              gx = this.GRAVITY_X * (elapsed / 1000);
+              gy = this.GRAVITY_Y * (elapsed / 1000);
+              this.vx += this.ax * elapsed + gx;
+              this.vy += this.ay * elapsed + gy;
+            }
+            this.x += this.vx * elapsed;
+            this.y += this.vy * elapsed;
+          }
+          this.checkEdges();
+        }
+        this.render = function () {
+          this.context.fillStyle = this.color;
+          this.context.beginPath();
+          this.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+          this.context.fill();
+        }
+        this.mouseDown = function (event) {
+          if (event.buttons === 1 || event.touches) {
+            this.lastHeld = {
+              x: event.clientX || event.touches[0].clientX,
+              y: event.clientY || event.touches[0].clientY
+            };
+            var localLocation = {
+              x: this.lastHeld.x - this.x,
+              y: this.lastHeld.y - this.y
+            };
+            var distance = Math.sqrt(Math.pow(localLocation.x, 2) + Math.pow(localLocation.y, 2));
+            if (this.radius >= distance) {
+              this.isHeld = true;
+              this.vx = 0;
+              this.vy = 0;
+            }
+          }
+
+          if (event.changedTouches) {
+            event.preventDefault();
+          }
+        }
+        this.mouseUp = function (event) {
+          if (this.isHeld) {
+            this.isSleeping = false;
+
+            //var heldLocation = {
+            //  x: event.clientX || event.touches[0].clientX,
+            //  y: event.clientY || event.touches[0].clientY
+            //};
+            //var localLocation = {
+            //  x: heldLocation.x - this.x,
+            //  y: heldLocation.y - this.y
+            //};
+            //var netLocation = {
+            //  x: heldLocation.x - this.lastHeld.x,
+            //  y: heldLocation.y - this.lastHeld.y
+            //};
+
+            this.vx = this.lastHeldVelocity.x * 0.1;
+            this.vy = this.lastHeldVelocity.y * 0.1;
+            this.lastHeldVelocity.x = 0;
+            this.lastHeldVelocity.y = 0;
+          }
+          this.isHeld = false;
+
+          if (event.changedTouches) {
+            event.preventDefault();
+          }
+        }
+        this.mouseMove = function (event) {
+          if (this.isHeld) {
+            var heldLocation = {
+              x: event.clientX || event.touches[0].clientX,
+              y: event.clientY || event.touches[0].clientY
+            };
+
+            var localLocation = {
+              x: heldLocation.x - this.x,
+              y: heldLocation.y - this.y
+            };
+            var netLocation = {
+              x: heldLocation.x - this.lastHeld.x,
+              y: heldLocation.y - this.lastHeld.y
+            };
+
+            this.x += netLocation.x;
+            this.y += netLocation.y;
+
+            this.lastHeld = {
+              x: heldLocation.x,
+              y: heldLocation.y
+            };
+            this.lastHeldVelocity.x = netLocation.x;
+            this.lastHeldVelocity.y = netLocation.y;
+          }
+          if (event.changedTouches) {
+            event.preventDefault();
+          }
+        }
+        this.checkEdges = function () {
+          var bottom = this.canvas.height - this.radius;
+          var top = this.radius;
+          var left = this.radius;
+          var right = this.canvas.width - this.radius;
+          if (this.y > bottom) {
+            this.y = bottom;
+            this.vx = this.vx * this.friction;
+            this.vy = - this.vy * this.elasticity;
+          }
+          if (this.y < top) {
+            this.y = top;
+            this.vx = this.vx * this.friction;
+            this.vy = - this.vy * this.elasticity;
+          }
+          if (this.x < left) {
+            this.x = left;
+            this.vx = - this.vx * this.elasticity;
+            this.vy = this.vy * this.friction;
+          }
+          if (this.x > right) {
+            this.x = right;
+            this.vx = - this.vx * this.elasticity;
+            this.vy = this.vy * this.friction;
+          }
+          if (this.ax || this.ay) {
+            if (- 0.02 <= Math.sqrt(Math.pow(this.vy, 2) + Math.pow(this.vy, 2)) <= 0.02) {
+              this.isSleeping = true;
+              this.vx = 0;
+              this.vy = 0;
+            }
+          }
+        }
+        this.handleEvent = function (event) {
+          console.log(event.type);
+          switch (event.type) {
+            case 'mousemove':
+            case 'touchmove': {
+              this.mouseMove(event);
+              break;
+            }
+            case 'mousedown':
+            case 'touchstart': {
+              this.mouseDown(event);
+              break;
+            }
+            case 'mouseup':
+            case 'touchend': {
+              this.mouseUp(event);
+            }
+          }
+        }
+        this.canvas.addEventListener('mousemove', this);
+        this.canvas.addEventListener('mousedown', this);
+        this.canvas.addEventListener('mouseup', this);
+
+        this.canvas.addEventListener('touchmove', this);
+        this.canvas.addEventListener('touchstart', this);
+        this.canvas.addEventListener('touchend', this);
+      }
+      var canvas = document.getElementById('canvas');
+      function onResize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      window.addEventListener('resize', onResize, false);
+
+      onResize();
+      var canvasBall = new ball(canvas, canvas.width / 2, 75, 0.9, 0.95, 0, 9.8 / 2, 50, '#000000');
+      var lastRun = performance.now();
+      function render(time) {
+        canvasBall.context.clearRect(0, 0, canvasBall.canvas.width, canvasBall.canvas.height);
+        canvasBall.requestUpdateLocation(time - lastRun);
+        canvasBall.context.beginPath();
+        canvasBall.context.fillStyle = '#FFFFFF';
+        canvasBall.context.rect(0, 0, canvasBall.canvas.width, canvasBall.canvas.height);
+        canvasBall.context.fill();
+        canvasBall.render();
+        lastRun = performance.now();
+        requestAnimationFrame(render);
+      };
+      window.onload = function () {
+        requestAnimationFrame(render);
+      }
+  </script>
+</body>
+
+</html>
