@@ -48,9 +48,10 @@
       this.color = color;
 
       this.isHeld = false;
+      this.isSleeping = false;
 
       this.requestUpdateLocation = function (elapsed) {
-        if (!this.isHeld) {
+        if (!this.isHeld || !this.isSleeping) {
           let gx = this.GRAVITY_X * elapsed;
           let gy = this.GRAVITY_Y * elapsed;
 
@@ -59,7 +60,7 @@
           this.x += this.vx * elapsed;
           this.y += this.vy * elapsed;
         }
-        this.onBottom();
+        this.detectSides();
       }
 
       this.render = function () {
@@ -68,8 +69,14 @@
         this.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
         this.context.fill();
       }
-      this.onBottom = function () {
+      this.updateSleepingStatus = function () {
+
+      }
+      this.detectSides = function () {
         var bottom = this.canvas.height - this.radius;
+        var left = this.radius;
+        var right = this.canvas.width - this.radius;
+        var top = this.radius;
         if (this.y > bottom) {
           this.y = bottom;
           this.vy = -this.vy * this.elasticity;
